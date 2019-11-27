@@ -1,0 +1,37 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node:8
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          - v1-dependencies-
+      - run: npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+      - run: npm run test:unit
+
+      - run:
+        name: Starting server
+        command: npm start
+        background: true
+
+      - run: sleep 5
+      # This will authenticate using the `ENGINE_API_KEY` environment
+      # variable. Configure your endpoint's location in your Apollo config.
+      - run: npx apollo service:check
+
+      # - run:
+      #   name: Build and push docker image
+      #   command:
+      # - run:
+      #   name: Deploy service
+      #   command:
